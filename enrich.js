@@ -15,7 +15,7 @@
 
 
   //////////////////////////////////////////////
-  // Library root function
+  // Library root function and base enriched constructor
   //////////////////////////////////////////////
 
   function enrich(thing, name, parent) {
@@ -26,6 +26,22 @@
     else if (isArray) return new EnrichedArray(thing, name, parent);
     else return thing;
   }
+
+  function Enriched() {}
+  Enriched.prototype.enriched = true;
+  Enriched.prototype.on = function (event, fn) {
+    if(!this.handlers[event]) this.handlers[event] = [];
+    this.handlers[event].push(fn);
+  };
+  Enriched.prototype. emit = function (event) {
+    var eventHandlers = this.handlers[event];
+    if(eventHandlers) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      for(var i = 0; i < eventHandlers.length; i++) {
+        eventHandlers[i].apply(null, args);
+      }
+    }
+  };
 
 
 
@@ -70,7 +86,8 @@
       console.log('Property changed: ' + prop);
     });
   }
-  EnrichedObject.prototype.enriched = true;
+  EnrichedObject.prototype = Object.create(Enriched.prototype);
+  EnrichedObject.prototype.constructor = EnrichedObject;
 
   EnrichedObject.prototype.getterFactory = function (prop) {
     return function () {
@@ -85,9 +102,6 @@
       this['_' + prop] = value;
     };
   };
-
-  EnrichedObject.prototype.on = on;
-  EnrichedObject.prototype.emit = emit;
 
 
 
@@ -147,7 +161,8 @@
       console.log('Index changed: ' + index);
     });
   }
-  EnrichedArray.prototype.enriched = true;
+  EnrichedArray.prototype = Object.create(Enriched.prototype);
+  EnrichedArray.prototype.constructor = EnrichedArray;
 
   Object.getOwnPropertyNames(Array.prototype).forEach(function(prop) {
     if(Array.prototype[prop].constructor === Function) {
@@ -173,30 +188,6 @@
       return this._array[index];
     };
   };
-
-  EnrichedArray.prototype.on = on;
-  EnrichedArray.prototype.emit = emit;
-
-
-
-  //////////////////////////////////////////////
-  // Common functions
-  //////////////////////////////////////////////
-
-  function on(event, fn) {
-    if(!this.handlers[event]) this.handlers[event] = [];
-    this.handlers[event].push(fn);
-  }
-
-  function emit(event) {
-    var eventHandlers = this.handlers[event];
-    if(eventHandlers) {
-      var args = Array.prototype.slice.call(arguments, 1);
-      for(var i = 0; i < eventHandlers.length; i++) {
-        eventHandlers[i].apply(null, args);
-      }
-    }
-  }
 
   return enrich;
 }));
