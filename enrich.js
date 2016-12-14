@@ -19,7 +19,7 @@
   function enrich(thing, name, parent) {
     var isObject = thing.constructor === Object;
     var isArray = thing.constructor === Array;
-    
+
     if (thing.enriched) return thing;
     if (isObject) return new EnrichedObject(thing, name, parent);
     if (isArray) return new EnrichedArray(thing, name, parent);
@@ -105,8 +105,8 @@
         oldValue: this['_' + prop],
         newValue: value
       };
-      this.emit('change', data);
       this['_' + prop] = value;
+      this.emit('change', data);
     };
   };
 
@@ -182,8 +182,8 @@
             oldValue: this._array,
             newValue: newArray
           };
-          this.emit('change', data);
           EnrichedArray.call(this, newArray); //will all handlers disappear???
+          this.emit('change', data);
         }
         return returnValue;
       };
@@ -197,8 +197,8 @@
         oldValue: this._array[index],
         newValue: value
       };
-      this.emit('change', data);
       this._array[index] = value;
+      this.emit('change', data);
     };
   };
 
