@@ -37,6 +37,7 @@
     var eventHandlers = this.handlers[event];
     if(eventHandlers) {
       for(var i = 0; i < eventHandlers.length; i++) {
+        data.source = this;
         eventHandlers[i](data);
       }
     }
@@ -176,15 +177,13 @@
         for(var i = 0; i < this._array.length; i++) newArray.push(this._array[i]);
         var returnValue = Array.prototype[prop].apply(newArray, arguments);
         if(newArray.join(',') !== this._array.join(',')) {
-          if(this.parent) {
-            var data = {
-              propertyPath: [this.name],
-              oldValue: this._array,
-              newValue: newArray
-            };
-            this.parent.emit('change', data);
-          }
-          EnrichedArray.call(this, newArray);
+          var data = {
+            propertyPath: [],
+            oldValue: this._array,
+            newValue: newArray
+          };
+          this.emit('change', data);
+          EnrichedArray.call(this, newArray); //will all handlers disappear???
         }
         return returnValue;
       };
