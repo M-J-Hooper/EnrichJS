@@ -33,3 +33,5 @@ console.time('Enriched');
 test(enriched);
 console.timeEnd('Enriched');
 console.log(JSON.stringify(enriched));
+
+console.log(enriched.numbers.concat(enriched.numbers.obj));

@@ -74,7 +74,7 @@
       if(!this[props[i]] && obj.constructor.prototype[props[i]] &&
         obj.constructor.prototype[props[i]].constructor === Function) {
         Object.defineProperty(this, props[i], {
-          value: this.modifierFactory(props[i], obj)
+          value: this.modifierFactory(props[i])
         });
       }
     }
@@ -103,12 +103,15 @@
     return this;
   };
 
-  EnrichedObject.prototype.modifierFactory = function(prop, obj){
+  EnrichedObject.prototype.modifierFactory = function(prop){
     return function () {
-      var returnValue = obj.constructor.prototype[prop].apply(this.obj, arguments);
+      var oldValue = (this.obj.constructor === Array) ? [] : {};
+      for(var p in this.obj) oldValue[p] = this.obj[p];
+
+      var returnValue = this.obj.constructor.prototype[prop].apply(this.obj, arguments);
       var data = {
         propertyPath: [],
-        oldValue: obj,
+        oldValue: oldValue,
         newValue: this.obj
       };
       EnrichedObject.call(this, this.obj); //will all handlers disappear???
