@@ -10,9 +10,7 @@
       this.enrich = factory();
     }
   }(function () {
-
   'use strict';
-
 
   //////////////////////////////////////////////
   // Library root function and base enriched constructor
@@ -33,6 +31,7 @@
   Enriched.prototype.on = function (event, fn) {
     if(!this.handlers[event]) this.handlers[event] = [];
     this.handlers[event].push(fn);
+    return this;
   };
   Enriched.prototype.emit = function (event, data) {
     var eventHandlers = this.handlers[event];
@@ -44,6 +43,7 @@
     console.log(JSON.stringify(data));
     if(this.name) data.propertyPath.push(this.name);
     if(this.parent) this.parent.emit(event, data);
+    return this;
   };
 
 
