@@ -22,10 +22,12 @@ var obj = {
 };
 var enriched =  new enrich(obj);
 
-console.time('Regular');
+console.time('Original');
 test(obj);
-console.timeEnd('Regular');
+console.timeEnd('Original');
 console.log(JSON.stringify(obj));
+
+console.log('');
 
 console.time('Enriched');
 test(enriched);
