@@ -33,14 +33,16 @@
     if(!this.handlers[event]) this.handlers[event] = [];
     this.handlers[event].push(fn);
   };
-  Enriched.prototype. emit = function (event) {
+  Enriched.prototype.emit = function (event, data) {
     var eventHandlers = this.handlers[event];
     if(eventHandlers) {
-      var args = Array.prototype.slice.call(arguments, 1);
       for(var i = 0; i < eventHandlers.length; i++) {
-        eventHandlers[i].apply(null, args);
+        eventHandlers[i](data);
       }
     }
+    console.log(JSON.stringify(data));
+    if(this.name) data.propertyPath.push(this.name);
+    if(this.parent) this.parent.emit(event, data);
   };
 
 
@@ -82,8 +84,8 @@
       });
     }
 
-    this.on('change', function (prop) {
-      console.log('Property changed: ' + prop);
+    this.on('change', function (data) {
+      console.log('Property changed: ' + data.propertyPath);
     });
   }
   EnrichedObject.prototype = Object.create(Enriched.prototype);
@@ -97,8 +99,12 @@
 
   EnrichedObject.prototype.setterFactory = function (prop) {
     return function (value) {
-      this.emit('change', prop);
-      if(this.parent) this.parent.emit('change', this.name);
+      var data = {
+        propertyPath: [prop],
+        oldValue: this['_' + prop],
+        newValue: value
+      };
+      this.emit('change', data);
       this['_' + prop] = value;
     };
   };
@@ -157,8 +163,8 @@
       });
     }
 
-    this.on('change', function (index) {
-      console.log('Index changed: ' + index);
+    this.on('change', function (data) {
+      console.log('Index changed: ' + data.propertyPath);
     });
   }
   EnrichedArray.prototype = Object.create(Enriched.prototype);
@@ -167,18 +173,32 @@
   Object.getOwnPropertyNames(Array.prototype).forEach(function(prop) {
     if(Array.prototype[prop].constructor === Function) {
       EnrichedArray.prototype[prop] = function () {
-        var newArray = Array.prototype[prop].apply(this._array, arguments);
-        var isArray = newArray.constructor === Array;
-        if(this.parent) this.parent.emit('change', this.name);
-        EnrichedArray.call(this, isArray ? newArray : this._array);
+        var newArray = [];
+        for(var i = 0; i < this._array.length; i++) newArray.push(this._array[i]);
+        Array.prototype[prop].apply(newArray, arguments);
+        if(newArray.join(',') !== this._array.join(',')) {
+          if(this.parent) {
+            var data = {
+              propertyPath: [this.name],
+              oldValue: this._array,
+              newValue: newArray
+            };
+            this.parent.emit('change', data);
+          }
+          EnrichedArray.call(this, newArray);
+        }
       };
     }
   });
 
   EnrichedArray.prototype.setterFactory = function(index) {
     return function(value) {
-      this.emit('change', index);
-      if(this.parent) this.parent.emit('change', this.name);
+      var data = {
+        propertyPath: [index],
+        oldValue: this._array[index],
+        newValue: value
+      };
+      this.emit('change', data);
       this._array[index] = value;
     };
   };
