@@ -114,8 +114,10 @@
         oldValue: oldValue,
         newValue: this.obj
       };
-      EnrichedObject.call(this, this.obj); //will all handlers disappear???
-      this.emit('change', data);
+      if(JSON.stringify(data.oldValue) !== JSON.stringify(data.newValue)) {
+        EnrichedObject.call(this, this.obj); //will all handlers disappear???
+        this.emit('change', data);
+      }
       return returnValue;
     };
   };
@@ -127,8 +129,10 @@
         oldValue: this.obj[prop],
         newValue: value
       };
-      this.obj[prop] = value;
-      this.emit('change', data);
+      if(JSON.stringify(data.oldValue) !== JSON.stringify(data.newValue)) {
+        this.obj[prop] = value;
+        this.emit('change', data);
+      }
     };
   };
 

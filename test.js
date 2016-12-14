@@ -4,6 +4,7 @@ function test(obj) {
   obj.name = 'Jack';
   obj.details.age = 42;
   obj.numbers[0] = 999;
+  obj.numbers[0] = 999;
   obj.numbers.push(100);
   obj.numbers.shift();
   for(var i = 0; i < obj.numbers.length; i++) {
@@ -33,5 +34,3 @@ console.time('Enriched');
 test(enriched);
 console.timeEnd('Enriched');
 console.log(JSON.stringify(enriched));
-
-console.log(enriched.numbers.concat(enriched.numbers.obj));
