@@ -175,7 +175,7 @@
       EnrichedArray.prototype[prop] = function () {
         var newArray = [];
         for(var i = 0; i < this._array.length; i++) newArray.push(this._array[i]);
-        Array.prototype[prop].apply(newArray, arguments);
+        var returnValue = Array.prototype[prop].apply(newArray, arguments);
         if(newArray.join(',') !== this._array.join(',')) {
           if(this.parent) {
             var data = {
@@ -187,6 +187,7 @@
           }
           EnrichedArray.call(this, newArray);
         }
+        return returnValue;
       };
     }
   });
