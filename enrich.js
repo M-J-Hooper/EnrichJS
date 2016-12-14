@@ -21,10 +21,11 @@
   function enrich(thing, name, parent) {
     var isObject = thing.constructor === Object;
     var isArray = thing.constructor === Array;
-
+    
+    if (thing.enriched) return thing;
     if (isObject) return new EnrichedObject(thing, name, parent);
-    else if (isArray) return new EnrichedArray(thing, name, parent);
-    else return thing;
+    if (isArray) return new EnrichedArray(thing, name, parent);
+    return thing;
   }
 
   function Enriched() {}
@@ -52,7 +53,6 @@
   //////////////////////////////////////////////
 
   function EnrichedObject(obj, name, parent) {
-    if (obj.enriched) return obj;
     if (name && !this.name) {
       Object.defineProperty(this, 'name', {
         value: name
@@ -116,7 +116,6 @@
   //////////////////////////////////////////////
 
   function EnrichedArray(array, name, parent) {
-    if (array.enriched) return array;
     if (name && !this.name) {
       Object.defineProperty(this, 'name', {
         value: name
