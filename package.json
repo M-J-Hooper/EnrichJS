@@ -1,6 +1,6 @@
 {
   "name": "enrichjs",
   "version": "1.0.0",
-  "description": "A library for enriching Javascript objects with change-tracking, event, and undo/redo functionality.",
+  "description": "Library for change-tracking, events, and undo/redo",
   "main": "test.js"
 }
