@@ -22,6 +22,9 @@ var obj = {
   }
 };
 var enriched =  new enrich(obj);
+enriched.on('change', function (data) {
+  console.log('Changed: ' + JSON.stringify(data));
+});
 
 console.time('Original');
 test(obj);
@@ -33,4 +36,10 @@ console.log('');
 console.time('Enriched');
 test(enriched);
 console.timeEnd('Enriched');
+var data = {
+  propertyPath: ["4", "numbers"],
+  oldValue: 100,
+  newValue: 200
+};
+enriched.undoFromEventData(data);
 console.log(JSON.stringify(enriched));

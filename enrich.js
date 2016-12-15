@@ -25,7 +25,7 @@
     return obj;
   }
 
-  function EnrichedObject(obj, propertyName, parent) {
+  function EnrichedObject(obj, propertyName, parent, handlers) {
     if (propertyName && !this.propertyName) {
       Object.defineProperty(this, 'propertyName', {
         value: propertyName
@@ -39,7 +39,7 @@
     }
     Object.defineProperty(this, 'handlers', {
       writable: true,
-      value: {}
+      value: handlers || {}
     });
 
     var emptyObj = (obj.constructor === Array) ? [] : {};
@@ -78,10 +78,6 @@
         });
       }
     }
-
-    this.on('change', function (data) {
-      console.log('Changed: ' + data.propertyPath);
-    });
   }
 
   EnrichedObject.prototype.enriched = true;
@@ -97,7 +93,6 @@
         eventHandlers[i](data);
       }
     }
-    console.log(JSON.stringify(data));
     if(this.propertyName) data.propertyPath.push(this.propertyName);
     if(this.parent) this.parent.emit(event, data);
     return this;
@@ -115,7 +110,7 @@
         newValue: this.obj
       };
       if(JSON.stringify(data.oldValue) !== JSON.stringify(data.newValue)) {
-        EnrichedObject.call(this, this.obj); //will all handlers disappear???
+        EnrichedObject.call(this, this.obj, this.name, this.parent, this.handlers); //will all handlers disappear???
         this.emit('change', data);
       }
       return returnValue;
@@ -140,6 +135,18 @@
     return function() {
       return this.obj[prop];
     };
+  };
+
+  EnrichedObject.prototype.followPropertyPath = function(propertyPath) {
+    var result = this;
+    for(var i = propertyPath.length - 1; i >= 0; i--) result = result[propertyPath[i]];
+    return result;
+  };
+
+  EnrichedObject.prototype.undoFromEventData = function(data) {
+    var source = this;
+    for(var i = data.propertyPath.length - 1; i > 0; i--) source = source[data.propertyPath[i]];
+    source[data.propertyPath[i]] = data.oldValue; //should not trigger change event or at least not add to history
   };
 
   return enrich;
