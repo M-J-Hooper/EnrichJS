@@ -12,20 +12,29 @@
   }(function () {
   'use strict';
 
-  //////////////////////////////////////////////
-  // Library root function and base enriched constructor
-  //////////////////////////////////////////////
 
-  function enrich(obj, propertyName, parent) {
+  ///////////////////////////////////////////////////////
+  // Library root function
+  ///////////////////////////////////////////////////////
+
+  function enrich(obj, propertyName, parent, history) {
     var isObject = obj.constructor === Object;
     var isArray = obj.constructor === Array;
 
     if (obj.enriched) return obj;
-    if(isObject || isArray) return new EnrichedObject(obj, propertyName, parent);
+    if(isObject || isArray) return new EnrichedObject(obj, propertyName, parent, history);
     return obj;
   }
+  
+  enrich.globalHistory = [];
+  enrich.globalHistory.pointer = -1;
 
-  function EnrichedObject(obj, propertyName, parent, handlers) {
+  
+  ///////////////////////////////////////////////////////
+  // Constructor
+  ///////////////////////////////////////////////////////
+
+  function EnrichedObject(obj, propertyName, parent, handlers, history) {
     if (propertyName && !this.propertyName) {
       Object.defineProperty(this, 'propertyName', {
         value: propertyName
@@ -41,11 +50,15 @@
       writable: true,
       value: handlers || {}
     });
+    Object.defineProperty(this, 'history', {
+      writable: true,
+      value: history || []
+    });
+    if(!this.history.pointer) this.history.pointer = -1;
 
-    var emptyObj = (obj.constructor === Array) ? [] : {};
     Object.defineProperty(this, 'obj', {
       writable: true,
-      value: emptyObj,
+      value: new obj.constructor()
     });
 
     for(var prop in obj) {
@@ -79,28 +92,43 @@
       }
     }
   }
+  
+  
+  ///////////////////////////////////////////////////////
+  // Prototype core
+  ///////////////////////////////////////////////////////
 
   EnrichedObject.prototype.enriched = true;
+  
   EnrichedObject.prototype.on = function (event, fn) {
     if(!this.handlers[event]) this.handlers[event] = [];
     this.handlers[event].push(fn);
     return this;
   };
+  
   EnrichedObject.prototype.emit = function (event, data) {
+    var shallowData = JSON.parse(JSON.stringify(data)); //bad copy practice???
     var eventHandlers = this.handlers[event];
     if(eventHandlers) {
-      for(var i = 0; i < eventHandlers.length; i++) {
-        eventHandlers[i](data);
-      }
+      for(var i = 0; i < eventHandlers.length; i++) eventHandlers[i](shallowData);
     }
-    if(this.propertyName) data.propertyPath.push(this.propertyName);
+    if(event === 'change') {
+      this.history.push(shallowData);
+      if(!this.parent) enrich.globalHistory.push(this);
+      if(this.propertyName) data.propertyPath.push(this.propertyName);
+    }
     if(this.parent) this.parent.emit(event, data);
     return this;
   };
-
+  
+  
+  ///////////////////////////////////////////////////////
+  // Prototype helpers
+  ///////////////////////////////////////////////////////
+  
   EnrichedObject.prototype.modifierFactory = function(prop){
     return function () {
-      var oldValue = (this.obj.constructor === Array) ? [] : {};
+      var oldValue = new this.obj.constructor();
       for(var p in this.obj) oldValue[p] = this.obj[p];
 
       var returnValue = this.obj.constructor.prototype[prop].apply(this.obj, arguments);
@@ -109,8 +137,8 @@
         oldValue: oldValue,
         newValue: this.obj
       };
-      if(JSON.stringify(data.oldValue) !== JSON.stringify(data.newValue)) {
-        EnrichedObject.call(this, this.obj, this.name, this.parent, this.handlers); //will all handlers disappear???
+      if(!jsonEquality(data.oldValue, data.newValue)) {
+        EnrichedObject.call(this, this.obj, this.propertyName, this.parent, this.handlers, this.history);
         this.emit('change', data);
       }
       return returnValue;
@@ -124,7 +152,7 @@
         oldValue: this.obj[prop],
         newValue: value
       };
-      if(JSON.stringify(data.oldValue) !== JSON.stringify(data.newValue)) {
+      if(!jsonEquality(data.oldValue, data.newValue)) {
         this.obj[prop] = value;
         this.emit('change', data);
       }
@@ -137,17 +165,38 @@
     };
   };
 
-  EnrichedObject.prototype.followPropertyPath = function(propertyPath) {
-    var result = this;
-    for(var i = propertyPath.length - 1; i >= 0; i--) result = result[propertyPath[i]];
-    return result;
-  };
-
   EnrichedObject.prototype.undoFromEventData = function(data) {
     var source = this;
     for(var i = data.propertyPath.length - 1; i > 0; i--) source = source[data.propertyPath[i]];
     source[data.propertyPath[i]] = data.oldValue; //should not trigger change event or at least not add to history
   };
+  
+  EnrichedObject.prototype.followPropertyPath = function(propertyPath) {
+    var result = this;
+    for(var i = propertyPath.length - 1; i >= 0; i--) result = result[propertyPath[i]];
+    return result;
+  };
+  
+  EnrichedObject.prototype.stringFromEventData = function(data) {
+    var string = this.propertyName || 'this';
+    for(var i = data.propertyPath.length - 1; i >= 0; i--) {
+      if(!isNaN(data.propertyPath[i])) string += '[' + data.propertyPath[i] + ']';
+      else string += '.' + data.propertyPath[i];
+    }
+    string += ' changed from ' + JSON.stringify(data.oldValue);
+    string += ' to ' + JSON.stringify(data.newValue);
+    return string;
+  };
+  
+  
+  ///////////////////////////////////////////////////////
+  // Helper functions
+  ///////////////////////////////////////////////////////
+  
+  function jsonEquality(obj1, obj2) {
+    if(JSON.stringify(obj1) === JSON.stringify(obj2)) return true; //bad comparison practice???
+    return false;
+  }
 
   return enrich;
 }));

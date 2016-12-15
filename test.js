@@ -23,7 +23,7 @@ var obj = {
 };
 var enriched =  new enrich(obj);
 enriched.on('change', function (data) {
-  console.log('Changed: ' + JSON.stringify(data));
+  console.log(enriched.stringFromEventData(data));
 });
 
 console.time('Original');
@@ -37,3 +37,5 @@ console.time('Enriched');
 test(enriched);
 console.timeEnd('Enriched');
 console.log(JSON.stringify(enriched));
+console.log(JSON.stringify(enriched.history));
+console.log('break', JSON.stringify(enriched.numbers.history));
