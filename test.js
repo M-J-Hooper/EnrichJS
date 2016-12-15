@@ -36,10 +36,4 @@ console.log('');
 console.time('Enriched');
 test(enriched);
 console.timeEnd('Enriched');
-var data = {
-  propertyPath: ["4", "numbers"],
-  oldValue: 100,
-  newValue: 200
-};
-enriched.undoFromEventData(data);
 console.log(JSON.stringify(enriched));
