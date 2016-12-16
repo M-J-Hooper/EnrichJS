@@ -137,6 +137,45 @@
     return this;
   };
   
+  EnrichedObject.prototype.undo = function() {
+    //go downstream to change flags and then revert value
+    var source = this;
+    var first = true;
+    do {
+      for(var i = source.history.length - 1; i >= 0; i--) {
+        if(source.history[i].active && !source.history[i].undone) {
+          if(first) {
+            var index = i;
+            first = false
+          }          
+          
+          var data = source.history[i];
+          data.undone = true;
+          
+          var path = data.propertyPath;
+          if(path.length > 1) source = source[path[path.length - 1]];
+          
+          break;
+        }
+        
+        if(i === 0) return this;
+      }
+    } while(path.length > 1);
+    source.obj[data.propertyPath[0]] = data.oldValue;
+    
+    //go upstream to change flags
+    source = this;
+    var upstreamIndex = source.history[index].upstreamIndex;
+    while(source.parent) {
+      source = source.parent;
+      source.history[upstreamIndex].undone = true;
+      upstreamIndex = source.history[upstreamIndex].upstreamIndex;
+    }
+    enrich.globalHistory[upstreamIndex].undone = true;
+    
+    return this;
+  };
+  
   
   ///////////////////////////////////////////////////////
   // Prototype helpers
