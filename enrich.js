@@ -27,7 +27,6 @@
   }
   
   enrich.globalHistory = [];
-  enrich.globalHistory.pointer = -1;
 
   
   ///////////////////////////////////////////////////////
@@ -54,7 +53,6 @@
       writable: true,
       value: history || []
     });
-    if(!this.history.pointer) this.history.pointer = -1;
 
     Object.defineProperty(this, 'obj', {
       writable: true,
@@ -83,7 +81,7 @@
     }
 
     props = Object.getOwnPropertyNames(obj.constructor.prototype);
-    for(var i = 0; i < props.length; i++) {
+    for(i = 0; i < props.length; i++) {
       if(!this[props[i]] && obj.constructor.prototype[props[i]] &&
         obj.constructor.prototype[props[i]].constructor === Function) {
         Object.defineProperty(this, props[i], {
@@ -107,17 +105,35 @@
   };
   
   EnrichedObject.prototype.emit = function (event, data) {
-    var shallowData = JSON.parse(JSON.stringify(data)); //bad copy practice???
     var eventHandlers = this.handlers[event];
     if(eventHandlers) {
-      for(var i = 0; i < eventHandlers.length; i++) eventHandlers[i](shallowData);
+      for(var i = 0; i < eventHandlers.length; i++) eventHandlers[i](data);
     }
+    
+    var upstreamData = {};
+    for(var prop in data) upstreamData[prop] = data[prop];
+    
     if(event === 'change') {
-      this.history.push(shallowData);
-      if(!this.parent) enrich.globalHistory.push(this);
-      if(this.propertyName) data.propertyPath.push(this.propertyName);
+      upstreamData.propertyPath = [];
+      for(i = 0; i < data.propertyPath.length; i++) upstreamData.propertyPath[i] = data.propertyPath[i];
+      
+      data.undone = false;
+      data.active = true;
+      if(!this.parent) {
+        data.upstreamIndex = enrich.globalHistory.length;
+        var globalUpstreamData = {
+          source: this,
+          undone: false,
+          active: true
+        };
+        enrich.globalHistory.push(globalUpstreamData);
+      }
+      else data.upstreamIndex = this.parent.history.length;
+      this.history.push(data);
+      
+      if(this.propertyName) upstreamData.propertyPath.push(this.propertyName);
     }
-    if(this.parent) this.parent.emit(event, data);
+    if(this.parent) this.parent.emit(event, upstreamData);
     return this;
   };
   
