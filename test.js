@@ -6,9 +6,9 @@ function test(obj) {
   obj.numbers[0] = 999;
   obj.numbers.push(100);
   obj.numbers.shift();
-  for(var i = 0; i < obj.numbers.length; i++) {
-    obj.numbers[i] *= 2;
-  }
+  // for(var i = 0; i < obj.numbers.length; i++) {
+  //   obj.numbers[i] *= 2;
+  // }
 }
 
 var obj = {
@@ -20,14 +20,30 @@ var obj = {
     hair: 'brown'
   }
 };
-var enriched =  new enrich(obj);
+var enriched =  enrich(obj);
+enriched.on('change', function (data) {
+  console.log(enriched.stringFromChangeEvent(data, 'Enriched'));
+});
 
-console.time('Regular');
+console.time('Original');
 test(obj);
-console.timeEnd('Regular');
+console.timeEnd('Original');
 console.log(JSON.stringify(obj));
+
+console.log('');
 
 console.time('Enriched');
 test(enriched);
 console.timeEnd('Enriched');
+
+enriched.details.undo();
+enriched.redo();
+
+console.log('');
 console.log(JSON.stringify(enriched));
+console.log('');
+console.log(JSON.stringify(enrich.globalHistory));
+console.log('');
+console.log(JSON.stringify(enriched.history));
+console.log('');
+console.log(JSON.stringify(enriched.numbers.history));
