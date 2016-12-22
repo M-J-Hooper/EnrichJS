@@ -9,7 +9,7 @@
       // Browser globals
       this.enrich = factory();
     }
-  }(function () {
+}(function () {
   'use strict';
 
 
@@ -29,12 +29,16 @@
   enrich.globalHistory = [];
   
   enrich.undo = function() {
-    for(var i = enrich.globalHistory.length - 1; i >= 0; i--) {
-      if(enrich.globalHistory[i].active && !enrich.globalHistory[i].undone) {
-        enrich.globalHistory[i].source.undo();
-        break;
-      }
-    }
+    var change = getUndoable(enrich.globalHistory);
+    if(change) change.data.source.undo();
+    else console.log('Nothing to undo');
+    return this;
+  };
+  
+  enrich.redo = function() {
+    var change = getRedoable(enrich.globalHistory);
+    if(change) change.data.source.redo();
+    else console.log('Nothing to redo');
     return this;
   };
 
@@ -142,20 +146,29 @@
       this.history.push(data);
       
       if(this.propertyName) upstreamData.propertyPath.push(this.propertyName);
+      
     }
     if(this.parent) this.parent.emit(event, upstreamData);
+    
+    //awkward having this here, maybe attach it as handler???
+    if(event === 'change') {
+      if(data.propertyPath.length === 0) this.deactivate();
+      if(data.propertyPath.length === 1) this.deactivate(data.propertyPath[0]);
+    }
     return this;
   };
   
   EnrichedObject.prototype.undo = function() {
-    console.log('Undoing...');
-    this.unredo(true, getUndoable);   
+    var success = this.unredo(true, getUndoable);
+    if(success) console.log('Undone');
+    else console.log('Nothing to undo');
     return this;
   };
   
   EnrichedObject.prototype.redo = function() {
-    console.log('Redoing...');
-    this.unredo(false, getRedoable);   
+    var success = this.unredo(false, getRedoable);
+    if(success)console.log('Redone');
+    else console.log('Nothing to redo');
     return this;
   };
   
@@ -165,24 +178,27 @@
     var first = true;
     do {
       var change = getFunction(source.history);
-      if(first) {
-        var index = change.index;
-        first = false;
-      }          
-      
-      change.data.undone = undone;
-      var value = undone ? change.data.oldValue : change.data.newValue;
-      
-      var path = change.data.propertyPath;
-      if(path.length > 1) source = source[path[path.length - 1]];
-      else if(path.length === 1) {
-        var prop = change.data.propertyPath[0];
-        if(source[prop].history) getFunction(source[prop].history).data.undone = undone;
-        source.obj[prop] = enrich(value, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
+      if(change) {
+        if(first) {
+          var index = change.index;
+          first = false;
+        }          
+        
+        change.data.undone = undone;
+        var value = undone ? change.data.oldValue : change.data.newValue;
+        
+        var path = change.data.propertyPath;
+        if(path.length > 1) source = source[path[path.length - 1]];
+        else if(path.length === 1) {
+          var prop = change.data.propertyPath[0];
+          if(source[prop].history) getFunction(source[prop].history).data.undone = undone;
+          source.obj[prop] = enrich(value, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
+        }
+        else if(path.length === 0) {
+          EnrichedObject.call(source, value, source.propertyName, source.parent, source.handlers, source.history);
+        }
       }
-      else if(path.length === 0) {
-        EnrichedObject.call(source, value, source.propertyName, source.parent, source.handlers, source.history);
-      }
+      else return false;
     } while(path.length > 1);
     
     
@@ -195,12 +211,35 @@
       upstreamIndex = source.history[upstreamIndex].upstreamIndex;
     }
     enrich.globalHistory[upstreamIndex].undone = undone;
+    return true;
   };
   
   
   ///////////////////////////////////////////////////////
   // Prototype helpers
   ///////////////////////////////////////////////////////
+  
+  EnrichedObject.prototype.deactivate = function(prop) {
+    for(var i = this.history.length - 1; i >= 0; i--) {
+      var data = this.history[i];
+      var rootProp = data.propertyPath[data.propertyPath.length - 1];
+      
+      var check = true;
+      if(prop) check = rootProp === prop;
+      
+      if(check && data.undone && data.active) {
+        data.active = false;
+        var source = this;
+        var upstreamIndex = data.upstreamIndex;
+        while(source.parent) {
+          source = source.parent;
+          source.history[upstreamIndex].active = false;
+          upstreamIndex = source.history[upstreamIndex].upstreamIndex;
+        }
+        enrich.globalHistory[upstreamIndex].active = false;
+      }
+    }
+  };
   
   EnrichedObject.prototype.modifierFactory = function(prop){
     return function () {
