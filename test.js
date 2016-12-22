@@ -1,15 +1,14 @@
 var enrich = require('./enrich.js');
 
 function test(obj) {
-  obj.name = 'Jack';
-  obj.details.age = 42;
-  obj.numbers[0] = 999;
-  obj.numbers[0] = 999;
+  //obj.name = 'Jack';
+  //obj.details.age = 42;
+  //obj.numbers[0] = 999;
   obj.numbers.push(100);
-  obj.numbers.shift();
-  for(var i = 0; i < obj.numbers.length; i++) {
-    obj.numbers[i] *= 2;
-  }
+  //obj.numbers.shift();
+  // for(var i = 0; i < obj.numbers.length; i++) {
+  //   obj.numbers[i] *= 2;
+  // }
 }
 
 var obj = {
@@ -23,7 +22,7 @@ var obj = {
 };
 var enriched =  new enrich(obj);
 enriched.on('change', function (data) {
-  console.log(enriched.stringFromEventData(data));
+  console.log(enriched.stringFromChangeEvent(data, 'Enriched'));
 });
 
 console.time('Original');
@@ -36,8 +35,10 @@ console.log('');
 console.time('Enriched');
 test(enriched);
 console.timeEnd('Enriched');
-enriched.details.undo();
-enriched.numbers.undo().undo();
+
+enriched.numbers.undo();
+
+console.log('');
 console.log(JSON.stringify(enriched));
 console.log('');
 console.log(JSON.stringify(enrich.globalHistory));
@@ -45,4 +46,3 @@ console.log('');
 console.log(JSON.stringify(enriched.history));
 console.log('');
 console.log(JSON.stringify(enriched.numbers.history));
-console.log('');

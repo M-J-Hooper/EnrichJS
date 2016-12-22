@@ -17,16 +17,26 @@
   // Library root function
   ///////////////////////////////////////////////////////
 
-  function enrich(obj, propertyName, parent, history) {
+  var enrich = function(obj, propertyName, parent, handlers, history) {
     var isObject = obj.constructor === Object;
     var isArray = obj.constructor === Array;
 
     if (obj.enriched) return obj;
-    if(isObject || isArray) return new EnrichedObject(obj, propertyName, parent, history);
+    if(isObject || isArray) return new EnrichedObject(obj, propertyName, parent, handlers, history);
     return obj;
-  }
+  };
   
   enrich.globalHistory = [];
+  
+  enrich.undo = function() {
+    for(var i = enrich.globalHistory.length - 1; i >= 0; i--) {
+      if(enrich.globalHistory[i].active && !enrich.globalHistory[i].undone) {
+        enrich.globalHistory[i].source.undo();
+        break;
+      }
+    }
+    return this;
+  };
 
   
   ///////////////////////////////////////////////////////
@@ -60,7 +70,7 @@
     });
 
     for(var prop in obj) {
-      this.obj[prop] = enrich(obj[prop], prop, this);
+      this.obj[prop] = enrich(obj[prop], prop, this, obj[prop].handlers, obj[prop].history);
       Object.defineProperty(this, prop, {
         enumerable: true,
         configurable: true,
@@ -142,26 +152,26 @@
     var source = this;
     var first = true;
     do {
-      for(var i = source.history.length - 1; i >= 0; i--) {
-        if(source.history[i].active && !source.history[i].undone) {
-          if(first) {
-            var index = i;
-            first = false
-          }          
-          
-          var data = source.history[i];
-          data.undone = true;
-          
-          var path = data.propertyPath;
-          if(path.length > 1) source = source[path[path.length - 1]];
-          
-          break;
-        }
-        
-        if(i === 0) return this;
+      var undoable = getUndoable(source.history);
+      if(first) {
+        var index = undoable.index;
+        first = false;
+      }          
+      
+      undoable.data.undone = true;
+      
+      var path = undoable.data.propertyPath;
+      if(path.length > 1) source = source[path[path.length - 1]];
+      else if(path.length === 1) {
+        var prop = undoable.data.propertyPath[0];
+        if(source[prop].history) getUndoable(source[prop].history).data.undone = true;
+        source.obj[prop] = enrich(undoable.data.oldValue, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
+      }
+      else if(path.length === 0) {
+        EnrichedObject.call(source, undoable.data.oldValue, source.propertyName, source.parent, source.handlers, source.history);
       }
     } while(path.length > 1);
-    source.obj[data.propertyPath[0]] = data.oldValue;
+    
     
     //go upstream to change flags
     source = this;
@@ -232,8 +242,8 @@
     return result;
   };
   
-  EnrichedObject.prototype.stringFromEventData = function(data) {
-    var string = this.propertyName || 'this';
+  EnrichedObject.prototype.stringFromChangeEvent = function(data, varName) {
+    var string = varName || this.propertyName || 'this';
     for(var i = data.propertyPath.length - 1; i >= 0; i--) {
       if(!isNaN(data.propertyPath[i])) string += '[' + data.propertyPath[i] + ']';
       else string += '.' + data.propertyPath[i];
@@ -247,6 +257,20 @@
   ///////////////////////////////////////////////////////
   // Helper functions
   ///////////////////////////////////////////////////////
+  
+  function getUndoable(history) {
+    var undoable = {};
+    
+    for(var i = history.length - 1; i >= 0; i--) {
+      var data = history[i];
+      if(data.active && !data.undone) {
+        undoable.data = data;
+        undoable.index = i;
+        break;
+      }
+    }
+    return undoable;
+  }
   
   function jsonEquality(obj1, obj2) {
     if(JSON.stringify(obj1) === JSON.stringify(obj2)) return true; //bad comparison practice???
