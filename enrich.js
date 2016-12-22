@@ -148,27 +148,40 @@
   };
   
   EnrichedObject.prototype.undo = function() {
-    //go downstream to change flags and then revert value
+    console.log('Undoing...');
+    this.unredo(true, getUndoable);   
+    return this;
+  };
+  
+  EnrichedObject.prototype.redo = function() {
+    console.log('Redoing...');
+    this.unredo(false, getRedoable);   
+    return this;
+  };
+  
+  EnrichedObject.prototype.unredo = function(undone, getFunction) {
+    //go downstream to change flags and then change value
     var source = this;
     var first = true;
     do {
-      var undoable = getUndoable(source.history);
+      var change = getFunction(source.history);
       if(first) {
-        var index = undoable.index;
+        var index = change.index;
         first = false;
       }          
       
-      undoable.data.undone = true;
+      change.data.undone = undone;
+      var value = undone ? change.data.oldValue : change.data.newValue;
       
-      var path = undoable.data.propertyPath;
+      var path = change.data.propertyPath;
       if(path.length > 1) source = source[path[path.length - 1]];
       else if(path.length === 1) {
-        var prop = undoable.data.propertyPath[0];
-        if(source[prop].history) getUndoable(source[prop].history).data.undone = true;
-        source.obj[prop] = enrich(undoable.data.oldValue, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
+        var prop = change.data.propertyPath[0];
+        if(source[prop].history) getFunction(source[prop].history).data.undone = undone;
+        source.obj[prop] = enrich(value, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
       }
       else if(path.length === 0) {
-        EnrichedObject.call(source, undoable.data.oldValue, source.propertyName, source.parent, source.handlers, source.history);
+        EnrichedObject.call(source, value, source.propertyName, source.parent, source.handlers, source.history);
       }
     } while(path.length > 1);
     
@@ -178,12 +191,10 @@
     var upstreamIndex = source.history[index].upstreamIndex;
     while(source.parent) {
       source = source.parent;
-      source.history[upstreamIndex].undone = true;
+      source.history[upstreamIndex].undone = undone;
       upstreamIndex = source.history[upstreamIndex].upstreamIndex;
     }
-    enrich.globalHistory[upstreamIndex].undone = true;
-    
-    return this;
+    enrich.globalHistory[upstreamIndex].undone = undone;
   };
   
   
@@ -229,12 +240,6 @@
       return this.obj[prop];
     };
   };
-
-  EnrichedObject.prototype.undoFromEventData = function(data) {
-    var source = this;
-    for(var i = data.propertyPath.length - 1; i > 0; i--) source = source[data.propertyPath[i]];
-    source[data.propertyPath[i]] = data.oldValue; //should not trigger change event or at least not add to history
-  };
   
   EnrichedObject.prototype.followPropertyPath = function(propertyPath) {
     var result = this;
@@ -266,10 +271,24 @@
       if(data.active && !data.undone) {
         undoable.data = data;
         undoable.index = i;
-        break;
+        return undoable;
       }
     }
-    return undoable;
+    return undefined;
+  }
+  
+  function getRedoable(history) {
+    var redoable = {};
+    
+    for(var i = 0; i < history.length; i++) {
+      var data = history[i];
+      if(data.active && data.undone) {
+        redoable.data = data;
+        redoable.index = i;
+        return redoable;
+      }
+    }
+    return undefined;
   }
   
   function jsonEquality(obj1, obj2) {

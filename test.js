@@ -1,11 +1,11 @@
 var enrich = require('./enrich.js');
 
 function test(obj) {
-  //obj.name = 'Jack';
-  //obj.details.age = 42;
-  //obj.numbers[0] = 999;
+  obj.name = 'Jack';
+  obj.details.age = 42;
+  obj.numbers[0] = 999;
   obj.numbers.push(100);
-  //obj.numbers.shift();
+  obj.numbers.shift();
   // for(var i = 0; i < obj.numbers.length; i++) {
   //   obj.numbers[i] *= 2;
   // }
@@ -20,7 +20,7 @@ var obj = {
     hair: 'brown'
   }
 };
-var enriched =  new enrich(obj);
+var enriched =  enrich(obj);
 enriched.on('change', function (data) {
   console.log(enriched.stringFromChangeEvent(data, 'Enriched'));
 });
@@ -36,7 +36,8 @@ console.time('Enriched');
 test(enriched);
 console.timeEnd('Enriched');
 
-enriched.numbers.undo();
+enriched.details.undo();
+enriched.redo();
 
 console.log('');
 console.log(JSON.stringify(enriched));
