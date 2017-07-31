@@ -9,7 +9,7 @@
       // Browser globals
       this.enrich = factory();
     }
-}(function () {
+})(function () {
   'use strict';
 
 
@@ -25,16 +25,16 @@
     if(isObject || isArray) return new EnrichedObject(obj, propertyName, parent, handlers, history);
     return obj;
   };
-  
+
   enrich.globalHistory = [];
-  
+
   enrich.undo = function() {
     var change = getUndoable(enrich.globalHistory);
     if(change) change.data.source.undo();
     else console.log('Nothing to undo');
     return this;
   };
-  
+
   enrich.redo = function() {
     var change = getRedoable(enrich.globalHistory);
     if(change) change.data.source.redo();
@@ -42,7 +42,7 @@
     return this;
   };
 
-  
+
   ///////////////////////////////////////////////////////
   // Constructor
   ///////////////////////////////////////////////////////
@@ -96,41 +96,40 @@
 
     props = Object.getOwnPropertyNames(obj.constructor.prototype);
     for(i = 0; i < props.length; i++) {
-      if(!this[props[i]] && obj.constructor.prototype[props[i]] &&
-        obj.constructor.prototype[props[i]].constructor === Function) {
+      if(!this[props[i]] && obj.constructor.prototype[props[i]] && obj.constructor.prototype[props[i]].constructor === Function) {
         Object.defineProperty(this, props[i], {
           value: this.modifierFactory(props[i])
         });
       }
     }
   }
-  
-  
+
+
   ///////////////////////////////////////////////////////
   // Prototype core
   ///////////////////////////////////////////////////////
 
   EnrichedObject.prototype.enriched = true;
-  
+
   EnrichedObject.prototype.on = function (event, fn) {
     if(!this.handlers[event]) this.handlers[event] = [];
     this.handlers[event].push(fn);
     return this;
   };
-  
+
   EnrichedObject.prototype.emit = function (event, data) {
     var eventHandlers = this.handlers[event];
     if(eventHandlers) {
       for(var i = 0; i < eventHandlers.length; i++) eventHandlers[i](data);
     }
-    
+
     var upstreamData = {};
     for(var prop in data) upstreamData[prop] = data[prop];
-    
+
     if(event === 'change') {
       upstreamData.propertyPath = [];
       for(i = 0; i < data.propertyPath.length; i++) upstreamData.propertyPath[i] = data.propertyPath[i];
-      
+
       data.undone = false;
       data.active = true;
       if(!this.parent) {
@@ -144,12 +143,12 @@
       }
       else data.upstreamIndex = this.parent.history.length;
       this.history.push(data);
-      
+
       if(this.propertyName) upstreamData.propertyPath.push(this.propertyName);
-      
+
     }
     if(this.parent) this.parent.emit(event, upstreamData);
-    
+
     //awkward having this here, maybe attach it as handler???
     if(event === 'change') {
       if(data.propertyPath.length === 0) this.deactivate();
@@ -157,21 +156,21 @@
     }
     return this;
   };
-  
+
   EnrichedObject.prototype.undo = function() {
-    var success = this.unredo(true, getUndoable);
-    if(success) console.log('Undone');
+    var change = this.unredo(true, getUndoable);
+    if(change) this.emit('undo', change);
     else console.log('Nothing to undo');
     return this;
   };
-  
+
   EnrichedObject.prototype.redo = function() {
-    var success = this.unredo(false, getRedoable);
-    if(success)console.log('Redone');
+    var change = this.unredo(false, getRedoable);
+    if(change) this.emit('redo', change);
     else console.log('Nothing to redo');
     return this;
   };
-  
+
   EnrichedObject.prototype.unredo = function(undone, getFunction) {
     //go downstream to change flags and then change value
     var source = this;
@@ -182,11 +181,14 @@
         if(first) {
           var index = change.index;
           first = false;
-        }          
-        
+          
+          var returnData = {};
+          for(var p in change.data) returnData[p] = change.data[p];
+        }
+
         change.data.undone = undone;
         var value = undone ? change.data.oldValue : change.data.newValue;
-        
+
         var path = change.data.propertyPath;
         if(path.length > 1) source = source[path[path.length - 1]];
         else if(path.length === 1) {
@@ -200,8 +202,8 @@
       }
       else return false;
     } while(path.length > 1);
-    
-    
+
+
     //go upstream to change flags
     source = this;
     var upstreamIndex = source.history[index].upstreamIndex;
@@ -211,22 +213,22 @@
       upstreamIndex = source.history[upstreamIndex].upstreamIndex;
     }
     enrich.globalHistory[upstreamIndex].undone = undone;
-    return true;
+    return returnData;
   };
-  
-  
+
+
   ///////////////////////////////////////////////////////
   // Prototype helpers
   ///////////////////////////////////////////////////////
-  
+
   EnrichedObject.prototype.deactivate = function(prop) {
     for(var i = this.history.length - 1; i >= 0; i--) {
       var data = this.history[i];
       var rootProp = data.propertyPath[data.propertyPath.length - 1];
-      
+
       var check = true;
       if(prop) check = rootProp === prop;
-      
+
       if(check && data.undone && data.active) {
         data.active = false;
         var source = this;
@@ -240,7 +242,7 @@
       }
     }
   };
-  
+
   EnrichedObject.prototype.modifierFactory = function(prop){
     return function () {
       var oldValue = new this.obj.constructor();
@@ -279,13 +281,13 @@
       return this.obj[prop];
     };
   };
-  
+
   EnrichedObject.prototype.followPropertyPath = function(propertyPath) {
     var result = this;
     for(var i = propertyPath.length - 1; i >= 0; i--) result = result[propertyPath[i]];
     return result;
   };
-  
+
   EnrichedObject.prototype.stringFromChangeEvent = function(data, varName) {
     var string = varName || this.propertyName || 'this';
     for(var i = data.propertyPath.length - 1; i >= 0; i--) {
@@ -297,14 +299,36 @@
     return string;
   };
   
+  EnrichedObject.prototype.stringFromUndoEvent = function(data, varName) {
+    var string = varName || this.propertyName || 'this';
+    for(var i = data.propertyPath.length - 1; i >= 0; i--) {
+      if(!isNaN(data.propertyPath[i])) string += '[' + data.propertyPath[i] + ']';
+      else string += '.' + data.propertyPath[i];
+    }
+    string += ' undone from ' + JSON.stringify(data.newValue);
+    string += ' to ' + JSON.stringify(data.oldValue);
+    return string;
+  };
   
+  EnrichedObject.prototype.stringFromRedoEvent = function(data, varName) {
+    var string = varName || this.propertyName || 'this';
+    for(var i = data.propertyPath.length - 1; i >= 0; i--) {
+      if(!isNaN(data.propertyPath[i])) string += '[' + data.propertyPath[i] + ']';
+      else string += '.' + data.propertyPath[i];
+    }
+    string += ' redone from ' + JSON.stringify(data.oldValue);
+    string += ' to ' + JSON.stringify(data.newValue);
+    return string;
+  };
+
+
   ///////////////////////////////////////////////////////
   // Helper functions
   ///////////////////////////////////////////////////////
-  
+
   function getUndoable(history) {
     var undoable = {};
-    
+
     for(var i = history.length - 1; i >= 0; i--) {
       var data = history[i];
       if(data.active && !data.undone) {
@@ -315,10 +339,10 @@
     }
     return undefined;
   }
-  
+
   function getRedoable(history) {
     var redoable = {};
-    
+
     for(var i = 0; i < history.length; i++) {
       var data = history[i];
       if(data.active && data.undone) {
@@ -329,11 +353,11 @@
     }
     return undefined;
   }
-  
+
   function jsonEquality(obj1, obj2) {
     if(JSON.stringify(obj1) === JSON.stringify(obj2)) return true; //bad comparison practice???
     return false;
   }
 
   return enrich;
-}));
+});
