@@ -44,6 +44,7 @@ console.timeEnd('Enriched test time');
 
 enriched.undo().undo().redo();
 
+
 console.log('');
 console.log('Enriched:', JSON.stringify(enriched));
 console.log('');

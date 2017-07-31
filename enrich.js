@@ -149,7 +149,7 @@
     }
     if(this.parent) this.parent.emit(event, upstreamData);
 
-    //awkward having this here, maybe attach it as handler???
+    //awkward having this here, maybe attach it as handler??
     if(event === 'change') {
       if(data.propertyPath.length === 0) this.deactivate();
       if(data.propertyPath.length === 1) this.deactivate(data.propertyPath[0]);

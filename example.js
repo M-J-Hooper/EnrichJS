@@ -21,6 +21,7 @@ obj.on('redo', function (data) {
   console.log(obj.stringFromRedoEvent(data));
 });
 
+
 obj.name = 'Matthew';
 obj.details.age++;
 
