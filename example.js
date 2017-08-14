@@ -1,3 +1,5 @@
+//A working copy of the example given in the README
+
 var enrich = require('./enrich.js');
 
 var obj = {
