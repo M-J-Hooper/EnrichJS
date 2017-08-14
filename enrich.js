@@ -1,17 +1,13 @@
 (function (factory) {
     if (typeof exports === 'object') {
-      // Node
+      // Node requirements
       module.exports = factory();
-    } else if (typeof define === 'function' && define.amd) {
-      // AMD
-      define(factory);
     } else {
-      // Browser globals
+      // Browser global
       this.enrich = factory();
     }
 })(function () {
   'use strict';
-
 
   ///////////////////////////////////////////////////////
   // Library root function
@@ -27,7 +23,8 @@
   };
 
   enrich.globalHistory = [];
-
+  
+  //global undos/redos get refernce of object to change from global history
   enrich.undo = function() {
     var change = getUndoable(enrich.globalHistory);
     if(change) change.data.source.undo();
@@ -48,6 +45,7 @@
   ///////////////////////////////////////////////////////
 
   function EnrichedObject(obj, propertyName, parent, handlers, history) {
+    //extra properties to allow for enriched behaviour
     if (propertyName && !this.propertyName) {
       Object.defineProperty(this, 'propertyName', {
         value: propertyName
@@ -67,14 +65,19 @@
       writable: true,
       value: history || []
     });
-
+    
+    //create new obj type to store a replica of original object
     Object.defineProperty(this, 'obj', {
       writable: true,
       value: new obj.constructor()
     });
-
+    
     for(var prop in obj) {
+      //each property of original object must also be enriched to handle heirarchically structured data
       this.obj[prop] = enrich(obj[prop], prop, this, obj[prop].handlers, obj[prop].history);
+      
+      //add object property names with getters/setters modifying corresponding this.obj property
+      //allows changes to be added to history for undoing and for firing change events
       Object.defineProperty(this, prop, {
         enumerable: true,
         configurable: true,
@@ -82,7 +85,8 @@
         get: this.getterFactory(prop)
       });
     }
-
+    
+    //simulate array indices
     var props = Object.getOwnPropertyNames(obj);
     for(var i = 0; i < props.length; i++){
       if(!this[props[i]]) {
@@ -93,7 +97,8 @@
         });
       }
     }
-
+    
+    //add functions from prototype to give correct behaviour (eg. push on arrays)
     props = Object.getOwnPropertyNames(obj.constructor.prototype);
     for(i = 0; i < props.length; i++) {
       if(!this[props[i]] && obj.constructor.prototype[props[i]] && obj.constructor.prototype[props[i]].constructor === Function) {
@@ -108,15 +113,17 @@
   ///////////////////////////////////////////////////////
   // Prototype core
   ///////////////////////////////////////////////////////
-
-  EnrichedObject.prototype.enriched = true;
-
+  
+  EnrichedObject.prototype.enriched = true; //for detecting if enriched
+  
+  //attach event handlers
   EnrichedObject.prototype.on = function (event, fn) {
     if(!this.handlers[event]) this.handlers[event] = [];
     this.handlers[event].push(fn);
     return this;
   };
-
+  
+  //fire events
   EnrichedObject.prototype.emit = function (event, data) {
     var eventHandlers = this.handlers[event];
     if(eventHandlers) {
@@ -125,7 +132,8 @@
 
     var upstreamData = {};
     for(var prop in data) upstreamData[prop] = data[prop];
-
+    
+    //change events must be propagated up through heirarchically structured data to update their histories
     if(event === 'change') {
       upstreamData.propertyPath = [];
       for(i = 0; i < data.propertyPath.length; i++) upstreamData.propertyPath[i] = data.propertyPath[i];
@@ -147,9 +155,9 @@
       if(this.propertyName) upstreamData.propertyPath.push(this.propertyName);
 
     }
-    if(this.parent) this.parent.emit(event, upstreamData);
+    if(this.parent) this.parent.emit(event, upstreamData); //propagate the change event firing
 
-    //awkward having this here, maybe attach it as handler??
+    //awkward having this here, maybe attach it as handler?
     if(event === 'change') {
       if(data.propertyPath.length === 0) this.deactivate();
       if(data.propertyPath.length === 1) this.deactivate(data.propertyPath[0]);
