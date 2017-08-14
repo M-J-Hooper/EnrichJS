@@ -47,4 +47,4 @@ obj.redo();
 //this.name undone from "Matthew" to "Matt"
 ```
 
-This was primarily created as a as a learning exercises and there are currently a few issues including errors when undoing array methods. However, I can certainly see a few useful applications in web editors and similar scenarios where there is large user input.
+This was primarily created as an exercise for practicing prototypal and functional JavaScript principles. There are currently still a few issues including errors when undoing array methods and is a work in progress. However, I can certainly see a few useful applications in web-based editors and similar scenarios where there is large user input.
