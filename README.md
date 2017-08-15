@@ -38,13 +38,12 @@ obj.details.age++;
 //this.name changed from "Matt" to "Matthew"
 //this.details.age changed from 22 to 23
 
-obj.undo();
-obj.undo();
-obj.redo();
+obj.undo().undo().redo(); //Note the function chaining
 
 //Console readout:
 //this.details.age undone from 23 to 22
 //this.name undone from "Matthew" to "Matt"
+//this.name redone from "Matt" to "Matthew"
 ```
 
 This was primarily created as an exercise for practicing prototypal and functional JavaScript principles. There are currently still a few issues including errors when undoing array methods and is a work in progress. However, I can certainly see a few useful applications in web-based editors and similar scenarios where there is large user input.
