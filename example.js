@@ -27,6 +27,4 @@ obj.on('redo', function (data) {
 obj.name = 'Matthew';
 obj.details.age++;
 
-obj.undo();
-obj.undo();
-obj.redo();
+obj.undo().undo().redo()
