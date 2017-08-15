@@ -1,5 +1,5 @@
 # EnrichJS
-A library for enriching JavaScript objects and arrays with change-tracking, event, and undo/redo functionality.
+A library for "enriching" JavaScript objects and arrays with change-tracking, event, and undo/redo functionality.
 
 For example, consider this JavaScript object:
 ```js
