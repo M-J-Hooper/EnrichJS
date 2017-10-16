@@ -2,5 +2,17 @@
   "name": "enrichjs",
   "version": "1.0.0",
   "description": "Library for change-tracking, events, and undo/redo",
-  "main": "test.js"
+  "main": "test.js",
+  "dependencies": {
+    "chai": "^4.1.1",
+    "mocha": "^3.5.0",
+    "request": "^2.81.0"
+  },
+  "engines": {
+    "node": "4.1.x"
+  },
+  "scripts": {
+    "start": "node example.js",
+    "test": "./node_modules/.bin/mocha --reporter spec"
+  }
 }
