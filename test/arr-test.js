@@ -12,7 +12,7 @@ var arrays = {
 var arr = [2,4,8,16,999];
 
 describe('Array behaviour', function() {
-    describe('Arrays as props of object', function() {
+    describe('Arrays as props of standard objects', function() {
        it('Changing index and then undo and redo', function() {
           var as = enrich(arrays);
           as.a[2] = 100;
@@ -33,20 +33,58 @@ describe('Array behaviour', function() {
           expect(as.a[0]).to.equal(1);
           expect(as.a[5]).to.equal(6);
        });
-       it('Changing prop to array', function() {
+       
+       //would fail due to new nested object not having a history
+       
+    //   it('Changing prop to new array', function() {
           
-       });
+    //   });
     });
     
     describe('Pure array objects', function() {
        it('Changing index and then undo and redo', function() {
-          
+          var a = enrich(arr);
+          a[2] = 100;
+          a[0] = 5;
+          expect(a[2]).to.equal(100);
+          expect(a[0]).to.equal(5);
+          a.undo().undo().redo();
+          expect(a[2]).to.equal(100);
+          expect(a[0]).to.equal(2);
        });
        it('Apply array method then undo and redo', function() {
-          
+          var a = enrich(arr);
+          a.push(6);
+          expect(a.length).to.equal(6);
+          a.shift();
+          expect(a[0]).to.equal(4);
+          a.undo().undo().redo();
+          expect(a[0]).to.equal(2);
+          expect(a[5]).to.equal(6);
        });
-       it('Changing whole array', function() {
+       
+       //could not work as there can be no setter or getter for top level variable
+       
+    //   it('Changing whole array', function() {
           
+    //   });
+    
+        it('Standard objects as array entries behave correctly', function() {
+            var a = enrich(arr);
+            var entry = {
+                num: 23,
+                stuff: 'Stuff',
+                b: [1,2,3,4]
+            };
+            a.push(entry);
+            a.push({yay: 'Yay'});
+            a.undo();
+            expect(a.length).to.equal(6);
+            a[5].num++;
+            a[5].b.push(5);
+            a.undo().undo().redo();
+            //console.log(a.history);
+            expect(a[5].num).to.equal(24);
        });
     });
 });

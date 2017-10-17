@@ -201,10 +201,11 @@
         if(path.length > 1) source = source[path[path.length - 1]];
         else if(path.length === 1) {
           var prop = change.data.propertyPath[0];
-          if(source[prop].history) getFunction(source[prop].history).data.undone = undone;
+          if(source[prop].history && source[prop].history.length) getFunction(source[prop].history).data.undone = undone;
           source.obj[prop] = enrich(value, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
         }
         else if(path.length === 0) {
+          //Problem: undo a push leaves an empty index behind???
           EnrichedObject.call(source, value, source.propertyName, source.parent, source.handlers, source.history);
         }
       }
@@ -237,6 +238,7 @@
       var check = true;
       if(prop) check = rootProp === prop;
 
+      console.log(data, prop, check);
       if(check && data.undone && data.active) {
         data.active = false;
         var source = this;
@@ -249,6 +251,7 @@
         enrich.globalHistory[upstreamIndex].active = false;
       }
     }
+    console.log('sanity');
   };
 
   EnrichedObject.prototype.modifierFactory = function(prop){
@@ -278,7 +281,7 @@
         newValue: value
       };
       if(!jsonEquality(data.oldValue, data.newValue)) {
-        this.obj[prop] = value;
+        this.obj[prop] = enrich(value); //include history from previous data and add an entry with empty path???
         this.emit('change', data);
       }
     };

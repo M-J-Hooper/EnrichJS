@@ -9,7 +9,8 @@ var me = {
     hair: 'brown'
   }
 };
-describe('Basic object behaviour', function() {
+
+describe('Standard object behaviour', function() {
     describe('Undos and redos', function() {
        it('Undoes first level prop change', function() {
           var obj = enrich(me);
@@ -47,19 +48,28 @@ describe('Basic object behaviour', function() {
           obj.redo();
           expect(obj.details.age).to.equal(24);
        });
+       it('Single undo then change to deactivate', function() {
+          var obj = enrich(me);
+          obj.details.age++;
+          obj.undo();
+          obj.name = 'Matthew';
+          expect(obj.details.age).to.equal(23);
+          //console.log(obj.history);
+          expect(obj.history[0].active).to.equal(false);
+       });
        it('Nested object change and undo', function() {
           var obj = enrich(me);
           obj.details = {
               age: 12,
               hair: 'black',
               eyes: 'red'
-          }
+          };
           expect(obj.details.age).to.equal(12);
           obj.undo();
           expect(obj.details.hair).to.equal('brown');
        });
        
-       //fails due to new nested object not being enriched
+       //fails due to new nested object not having a history
        
     //   it('Nested object change then specific undo', function() {
     //       var obj = enrich(me);
