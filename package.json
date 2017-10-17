@@ -1,18 +1,25 @@
 {
-  "name": "enrichjs",
+  "name": "enrich",
   "version": "1.0.0",
   "description": "Library for change-tracking, events, and undo/redo",
-  "main": "test.js",
-  "dependencies": {
-    "chai": "^4.1.1",
-    "mocha": "^3.5.0",
-    "request": "^2.81.0"
-  },
+  "main": "example.js",
   "engines": {
     "node": "4.1.x"
   },
   "scripts": {
     "start": "node example.js",
     "test": "./node_modules/.bin/mocha --reporter spec"
+  },
+  "devDependencies": {
+    "chai": "^4.1.1",
+    "gulp": "^3.9.1",
+    "gulp-beautify": "^2.0.1",
+    "gulp-ignore": "^2.0.2",
+    "gulp-jshint": "^2.0.4",
+    "gulp-uglify": "^3.0.0",
+    "gulp-util": "^3.0.8",
+    "jshint": "^2.9.5",
+    "jshint-stylish": "^2.2.1",
+    "mocha": "^3.5.0"
   }
 }

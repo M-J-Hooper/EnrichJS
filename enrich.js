@@ -345,7 +345,7 @@
       deactivatedHistory.push(data);
     }
     return deactivatedHistory;
-  };
+  }
 
   function jsonEquality(obj1, obj2) {
     if(JSON.stringify(obj1) === JSON.stringify(obj2)) return true; //bad comparison practice???

@@ -56,6 +56,14 @@ describe('Standard object behaviour', function() {
           expect(obj.details.age).to.equal(23);
           expect(obj.history[0].active).to.equal(false);
        });
+       it('Single undo then change to deactivate', function() {
+          var obj = enrich(me);
+          obj.details.age++;
+          obj.undo();
+          obj.name = 'Matthew';
+          expect(obj.details.age).to.equal(23);
+          expect(obj.history[0].active).to.equal(false);
+       });
        it('Nested object change and undo', function() {
           var obj = enrich(me);
           obj.details = {
