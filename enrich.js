@@ -147,21 +147,17 @@
           undone: false,
           active: true
         };
+        enrich.history = deactivate(enrich.globalHistory);
         enrich.globalHistory.push(globalUpstreamData);
       }
       else data.upstreamIndex = this.parent.history.length;
+      this.history = deactivate(this.history);
       this.history.push(data);
 
       if(this.propertyName) upstreamData.propertyPath.push(this.propertyName);
-
     }
     if(this.parent) this.parent.emit(event, upstreamData); //propagate the change event firing
 
-    //awkward having this here, maybe attach it as handler?
-    if(event === 'change') {
-      if(data.propertyPath.length === 0) this.deactivate();
-      if(data.propertyPath.length === 1) this.deactivate(data.propertyPath[0]);
-    }
     return this;
   };
 
@@ -229,30 +225,6 @@
   ///////////////////////////////////////////////////////
   // Prototype helpers
   ///////////////////////////////////////////////////////
-
-  EnrichedObject.prototype.deactivate = function(prop) {
-    for(var i = this.history.length - 1; i >= 0; i--) {
-      var data = this.history[i];
-      var rootProp = data.propertyPath[data.propertyPath.length - 1];
-
-      var check = true;
-      if(prop) check = rootProp === prop;
-
-      console.log(data, prop, check);
-      if(check && data.undone && data.active) {
-        data.active = false;
-        var source = this;
-        var upstreamIndex = data.upstreamIndex;
-        while(source.parent) {
-          source = source.parent;
-          source.history[upstreamIndex].active = false;
-          upstreamIndex = source.history[upstreamIndex].upstreamIndex;
-        }
-        enrich.globalHistory[upstreamIndex].active = false;
-      }
-    }
-    console.log('sanity');
-  };
 
   EnrichedObject.prototype.modifierFactory = function(prop){
     return function () {
@@ -364,6 +336,16 @@
     }
     return undefined;
   }
+  
+  function deactivate(history) {
+    var deactivatedHistory = [];
+    for(var i = 0; i < history.length; i++) {
+      var data = history[i];
+      if(data.undone && data.active) data.active = false;
+      deactivatedHistory.push(data);
+    }
+    return deactivatedHistory;
+  };
 
   function jsonEquality(obj1, obj2) {
     if(JSON.stringify(obj1) === JSON.stringify(obj2)) return true; //bad comparison practice???

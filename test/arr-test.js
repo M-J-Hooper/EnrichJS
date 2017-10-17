@@ -83,7 +83,6 @@ describe('Array behaviour', function() {
             a[5].num++;
             a[5].b.push(5);
             a.undo().undo().redo();
-            //console.log(a.history);
             expect(a[5].num).to.equal(24);
        });
     });

@@ -54,7 +54,6 @@ describe('Standard object behaviour', function() {
           obj.undo();
           obj.name = 'Matthew';
           expect(obj.details.age).to.equal(23);
-          //console.log(obj.history);
           expect(obj.history[0].active).to.equal(false);
        });
        it('Nested object change and undo', function() {
