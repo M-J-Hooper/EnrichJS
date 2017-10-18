@@ -6,14 +6,14 @@ var mocha = require('gulp-mocha');
 
 var paths = {
     watch: ['**/*.js', '!node_modules/**'],
-    dist: 'dist',
+    //dist: 'dist',
     lint: ['**/*.js', '!dist/**', '!node_modules/**'],
     beautify: ['**/*.js', '!dist/**', '!node_modules/**'],
-    compress: 'enrich.js',
+    //compress: 'enrich-js/index.js',
     test: 'test/**/*.js'
 };
 
-var defaultTasks = ['lint', 'test', 'compress'];
+var defaultTasks = ['lint', 'test'];
 
 gulp.task('default', defaultTasks.concat('watch'));
 
@@ -30,11 +30,11 @@ gulp.task('test', function() {
         }));
 });
 
-gulp.task('compress', function() {
-    return gulp.src(paths.compress)
-        .pipe(uglify())
-        .pipe(gulp.dest(paths.dist));
-});
+// gulp.task('compress', function() {
+//     return gulp.src(paths.compress)
+//         .pipe(uglify())
+//         .pipe(gulp.dest(paths.dist));
+// });
 
 gulp.task('beautify', function() {
     return gulp.src(paths.beautify)

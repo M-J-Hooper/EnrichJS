@@ -1,6 +1,6 @@
 //A working copy of the example given in the README
 
-var enrich = require('./enrich.js');
+var enrich = require('./index.js');
 
 var obj = {
     name: 'Matt',

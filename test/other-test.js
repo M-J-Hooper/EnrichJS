@@ -1,4 +1,4 @@
-var enrich = require('../enrich.js');
+var enrich = require('../index.js');
 var expect = require('chai').expect;
 
 var me = {
@@ -43,7 +43,7 @@ describe('Miscellaneous behaviour', function() {
             a.shift();
             a.undo().undo().redo();
             var reverted = a.revert();
-            expect(reverted).to.have.length(6)
+            expect(reverted).to.have.length(6);
             expect(reverted.constructor).to.equal([].constructor);
             expect(reverted[3].constructor).to.not.equal(enrich({}).constructor);
         });

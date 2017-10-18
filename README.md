@@ -1,7 +1,17 @@
-# EnrichJS
-A library for enriching JavaScript objects and arrays with change-tracking, event, and undo/redo functionality.
+Enrich.js
+=========
 
-For example, consider this JavaScript object:
+A library for "enriching" JavaScript objects and arrays with flexible change-tracking, event, and undo/redo functionality.
+
+## Installation
+
+```bash
+npm install enrich-js --save
+```
+
+## Usage
+
+Consider this JavaScript object:
 ```js
 var obj = {
   name: 'Matt',
@@ -47,4 +57,10 @@ obj.redo();
 //this.name undone from "Matthew" to "Matt"
 ```
 
+## Contribution
+
 This was primarily created as an exercise for practicing prototypal and functional JavaScript principles. There are currently still a few issues including errors when undoing array methods and is a work in progress. However, I can certainly see a few useful applications in web-based editors and similar scenarios where there is large user input.
+
+## Release History
+
+* 0.1.0 Initial release

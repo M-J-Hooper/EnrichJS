@@ -1,4 +1,4 @@
-var enrich = require('../enrich.js');
+var enrich = require('../index.js');
 var expect = require('chai').expect;
 
 var arrays = {
