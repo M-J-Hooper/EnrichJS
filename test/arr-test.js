@@ -26,7 +26,7 @@ describe('Array behaviour', function() {
         it('Apply array method then undo and redo', function() {
             var as = enrich(arrays);
             as.a.push(6);
-            expect(as.a.length).to.equal(6);
+            expect(as.a).to.have.length(6);
             as.a.shift();
             expect(as.a[0]).to.equal(2);
             as.undo().undo().redo();
@@ -55,7 +55,7 @@ describe('Array behaviour', function() {
         it('Apply array method then undo and redo', function() {
             var a = enrich(arr);
             a.push(6);
-            expect(a.length).to.equal(6);
+            expect(a).to.have.length(6);
             a.shift();
             expect(a[0]).to.equal(4);
             a.undo().undo().redo();
@@ -81,7 +81,7 @@ describe('Array behaviour', function() {
                 yay: 'Yay'
             });
             a.undo();
-            expect(a.length).to.equal(6);
+            expect(a).to.have.length(6);
             a[5].num++;
             a[5].b.push(5);
             a.undo().undo().redo();

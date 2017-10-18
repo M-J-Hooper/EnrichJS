@@ -118,7 +118,7 @@ describe('Standard object behaviour', function() {
             obj.details.age = 30;
             obj.details.eyes = 'X';
             obj.undo().undo().redo();
-            expect(obj.history.length).to.equal(3);
+            expect(obj.history).to.have.length(3);
         });
         it('Correct nested history length', function() {
             var obj = enrich(me);
@@ -126,7 +126,7 @@ describe('Standard object behaviour', function() {
             obj.details.age = 30;
             obj.details.eyes = 'X';
             obj.undo().undo().redo();
-            expect(obj.details.history.length).to.equal(2);
+            expect(obj.details.history).to.have.length(2);
         });
     });
 });

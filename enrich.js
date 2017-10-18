@@ -302,6 +302,15 @@
         string += ' to ' + JSON.stringify(data.newValue);
         return string;
     };
+    
+    EnrichedObject.prototype.revert = function() {
+        var reverted = new this.obj.constructor();
+        for(var prop in this.obj) {
+            if(this.obj[prop].revert) reverted[prop] = this.obj[prop].revert();
+            else reverted[prop] = this.obj[prop];
+        }
+        return reverted;
+    };
 
 
     ///////////////////////////////////////////////////////

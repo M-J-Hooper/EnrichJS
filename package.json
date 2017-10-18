@@ -1,15 +1,25 @@
 {
-  "name": "enrich",
-  "version": "1.0.0",
-  "description": "Library for change-tracking, events, and undo/redo",
-  "main": "example.js",
-  "engines": {
-    "node": "4.1.x"
+  "name": "enrich-js",
+  "version": "0.1.0",
+  "description": "A library for \"enriching\" JavaScript objects with flexible change-tracking, event, and undo/redo functionality.",
+  "main": "index.js"
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/M-J-Hooper/EnrichJS.git"
   },
-  "scripts": {
-    "start": "node example.js",
-    "test": "./node_modules/.bin/mocha --reporter spec"
-  },
+  "keywords": [
+    "enrich",
+    "undo",
+    "redo",
+    "change",
+    "tracking",
+    "event"
+  ],
+  "author": "Matt Hooper <matthewjhooper94@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/M-J-Hooper/EnrichJS/issues"
+  }
   "devDependencies": {
     "chai": "^4.1.1",
     "gulp": "^3.9.1",
