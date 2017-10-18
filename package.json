@@ -33,6 +33,10 @@
     "jshint-stylish": "^2.2.1",
     "mocha": "^3.5.0"
   },
+  "files": [
+    "README.md",
+    "index.js"
+  ],
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec"
   }
