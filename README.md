@@ -48,13 +48,12 @@ obj.details.age++;
 //this.name changed from "Matt" to "Matthew"
 //this.details.age changed from 22 to 23
 
-obj.undo();
-obj.undo();
-obj.redo();
+obj.undo().undo().redo(); //Note the function chaining
 
 //Console readout:
 //this.details.age undone from 23 to 22
 //this.name undone from "Matthew" to "Matt"
+//this.name redone from "Matt" to "Matthew"
 ```
 
 ## Contribution
