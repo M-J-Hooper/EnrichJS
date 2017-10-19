@@ -22,23 +22,6 @@
         return obj;
     };
 
-    enrich.globalHistory = [];
-
-    //global undos/redos get refernce of object to change from global history
-    enrich.undo = function() {
-        var change = getUndoable(enrich.globalHistory);
-        if (change) change.data.source.undo();
-        else console.log('Nothing to undo');
-        return this;
-    };
-
-    enrich.redo = function() {
-        var change = getRedoable(enrich.globalHistory);
-        if (change) change.data.source.redo();
-        else console.log('Nothing to redo');
-        return this;
-    };
-
 
     ///////////////////////////////////////////////////////
     // Constructor
@@ -141,16 +124,7 @@
 
             data.undone = false;
             data.active = true;
-            if (!this.parent) {
-                data.upstreamIndex = enrich.globalHistory.length;
-                var globalUpstreamData = {
-                    source: this,
-                    undone: false,
-                    active: true
-                };
-                enrich.history = deactivate(enrich.globalHistory);
-                enrich.globalHistory.push(globalUpstreamData);
-            } else data.upstreamIndex = this.parent.history.length;
+            if(this.parent) data.upstreamIndex = this.parent.history.length;
             this.history = deactivate(this.history);
             this.history.push(data);
 
@@ -216,7 +190,6 @@
             source.history[upstreamIndex].undone = undone;
             upstreamIndex = source.history[upstreamIndex].upstreamIndex;
         }
-        enrich.globalHistory[upstreamIndex].undone = undone;
         return returnData;
     };
 
