@@ -156,22 +156,24 @@
 
             if (this.propertyName) upstreamData.propertyPath.push(this.propertyName);
         }
-        if (this.parent) this.parent.emit(event, upstreamData); //propagate the change event firing
+        if (this.parent) this.parent.emit(event, upstreamData); //propagate the event upstream
 
         return this;
     };
 
-    EnrichedObject.prototype.undo = function() {
+    EnrichedObject.prototype.undo = function(emitEvent) {
+        if(emitEvent === undefined) emitEvent = true;
         var change = this.unredo(true, getUndoable);
-        if (change) this.emit('undo', change);
-        else console.log('Nothing to undo');
+        if (emitEvent && change) this.emit('undo', change);
+        else if(!change) console.log('Nothing to undo');
         return this;
     };
 
-    EnrichedObject.prototype.redo = function() {
+    EnrichedObject.prototype.redo = function(emitEvent) {
+        if(emitEvent === undefined) emitEvent = true;
         var change = this.unredo(false, getRedoable);
-        if (change) this.emit('redo', change);
-        else console.log('Nothing to redo');
+        if (emitEvent && change) this.emit('redo', change);
+        else if(!change) console.log('Nothing to redo');
         return this;
     };
 

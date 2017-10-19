@@ -49,11 +49,34 @@ describe('Miscellaneous behaviour', function() {
         });
     });
     
+    describe('Undo/redo events', function() {
+        it('Event propagate to parents', function() {
+            var obj = enrich(me);
+            var x = 0;
+            obj.on('undo', function() { x++; });
+            obj.on('redo', function() { x++; });
+            
+            obj.name = 'Matthew';
+            obj.array[0].age++;
+            obj.undo().redo();
+            expect(x).to.equal(2);
+        });
+        it('Events can be disabled', function() {
+            var obj = enrich(me);
+            var x = 0;
+            obj.on('undo', function() { x++; });
+            obj.on('redo', function() { x++; });
+            
+            obj.name = 'Matthew';
+            obj.array[0].age++;
+            obj.undo(true).undo(false).redo(false);
+            expect(x).to.equal(1);
+        });
+    });
+    
     //enrich a custom object with custom modifying methods
     
     //adding and deleting extra properties
-    
-    //undo and redo event emitting with option to not emit
     
     //make changes from data without change event
 });
