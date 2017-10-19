@@ -160,6 +160,10 @@
 
         return this;
     };
+    
+    EnrichedObject.prototype.change = function(change) {
+          
+    };
 
     EnrichedObject.prototype.undo = function(emitEvent) {
         if(emitEvent === undefined) emitEvent = true;

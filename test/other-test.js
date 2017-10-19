@@ -74,6 +74,20 @@ describe('Miscellaneous behaviour', function() {
         });
     });
     
+    describe('Change prototype function', function() {
+        it('Changes are executes correctly', function() {
+            var obj = enrich(me);
+            
+        });
+        it('Events can be disabled', function() {
+            var obj = enrich(me);
+            var x = 0;
+            obj.on('change', function() { x++; });
+            
+            expect(x).to.equal(0);
+        });
+    });
+    
     //enrich a custom object with custom modifying methods
     
     //adding and deleting extra properties
