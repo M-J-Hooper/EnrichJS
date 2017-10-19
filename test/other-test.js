@@ -52,4 +52,8 @@ describe('Miscellaneous behaviour', function() {
     //enrich a custom object with custom modifying methods
     
     //adding and deleting extra properties
+    
+    //undo and redo event emitting with option to not emit
+    
+    //make changes from data without change event
 });
