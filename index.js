@@ -213,6 +213,9 @@
                 if (first) {
                     index = change.index;
                     first = false;
+                    var emitData = JSON.parse(JSON.stringify(change));
+                    emitData.propertyPath = [];
+                    if(emitEvent) pointer.emit(event, emitData); //should emit just path array...
                 }
 
                 change.undone = undone;
@@ -220,17 +223,15 @@
 
                 path = change.propertyPath;
                 if (path.length > 1) pointer = pointer[path[path.length - 1]];
-                else {
-                    if (path.length === 1) {
-                        var prop = change.propertyPath[0];
-                        //if (pointer[prop].history && pointer[prop].history.length) getFunction(pointer[prop].history).data.undone = undone;
-                        pointer.obj[prop] = enrich(value, pointer[prop].propertyName, pointer[prop].parent, pointer[prop].handlers, pointer[prop].history);
-                    } 
-                    else if (path.length === 0) {
-                        //Problem: undo a push leaves an empty index behind???
-                        EnrichedObject.call(pointer, value, pointer.propertyName, pointer.parent, pointer.handlers, pointer.history);
-                    }
-                    if(emitEvent) pointer.emit(event, change);
+                else if (path.length === 1) {
+                    var prop = change.propertyPath[0];
+                    //what does the line below even do???
+                    //if (pointer[prop].history && pointer[prop].history.length) getFunction(pointer[prop].history).data.undone = undone;
+                    pointer.obj[prop] = enrich(value, pointer[prop].propertyName, pointer[prop].parent, pointer[prop].handlers, pointer[prop].history);
+                } 
+                else if (path.length === 0) {
+                    //Problem: undo a push leaves an empty index behind???
+                    EnrichedObject.call(pointer, value, pointer.propertyName, pointer.parent, pointer.handlers, pointer.history);
                 }
             } else return false;
         } while (path.length > 1);
