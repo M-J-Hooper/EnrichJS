@@ -116,22 +116,23 @@
 
         var upstreamData = {};
         for (var prop in data) upstreamData[prop] = data[prop];
-
-        //change events must be propagated up through heirarchically structured data to update their histories
-        if (event === 'change') {
+        
+        //change, undo and redo events need to have correct prop paths at each level
+        if (['change', 'undo', 'redo'].indexOf(event) != -1) {
             upstreamData.propertyPath = [];
             for (i = 0; i < data.propertyPath.length; i++) upstreamData.propertyPath[i] = data.propertyPath[i];
-
-            data.undone = false;
-            data.active = true;
-            if(this.parent) data.upstreamIndex = this.parent.history.length;
-            this.history = deactivate(this.history);
-            this.history.push(data);
-
+            
+            //change events to update their histories
+            if(event === 'change') {
+                data.undone = false;
+                data.active = true;
+                if(this.parent) data.upstreamIndex = this.parent.history.length;
+                this.history = deactivate(this.history);
+                this.history.push(data);
+            }
             if (this.propertyName) upstreamData.propertyPath.push(this.propertyName);
         }
         if (this.parent) this.parent.emit(event, upstreamData); //propagate the event upstream
-
         return this;
     };
     
@@ -140,30 +141,30 @@
         change.active = true;
         
         //go downstream to change histories and make change
-        var source = this;
+        var pointer = this;
         while(true) {
             if(change.propertyPath.length == 1) {
-                source.obj[change.propertyPath[0]] = enrich(change.newValue); //change obj prop to avoid event from setter
+                pointer.obj[change.propertyPath[0]] = enrich(change.newValue); //change obj prop to avoid event from setter
                 break;
             }
             else if(change.propertyPath.length == 0) {
-                EnrichedObject.call(source, change.newValue, source.propertyName, source.parent, source.handlers, source.history);
+                EnrichedObject.call(pointer, change.newValue, pointer.propertyName, pointer.parent, pointer.handlers, pointer.history);
                 break;
             }
-            else source = source[change.propertyPath.pop()];
+            else pointer = pointer[change.propertyPath.pop()];
         }
         
         //go upstream to change histories
         while(true) {
-            if(source.parent) change.upstreamIndex = source.parent.history.length;
+            if(pointer.parent) change.upstreamIndex = pointer.parent.history.length;
             else delete change.upstreamIndex;
             
-            source.history = deactivate(source.history);
-            source.history.push(JSON.parse(JSON.stringify(change)));
+            pointer.history = deactivate(pointer.history);
+            pointer.history.push(JSON.parse(JSON.stringify(change)));
             
-            if(!source.parent) break;
-            change.propertyPath.push(source.propertyName);
-            source = source.parent;
+            if(!pointer.parent) break;
+            change.propertyPath.push(pointer.propertyName);
+            pointer = pointer.parent;
         } 
         return this;
     };
@@ -171,10 +172,10 @@
     EnrichedObject.prototype.undo = function(emitEvent, propertyPath) {
         if(emitEvent === undefined) emitEvent = true;
         
-        var source = this;
+        var pointer = this;
         if(propertyPath && propertyPath.length) {
-            while(propertyPath.length > 1) source = source[propertyPath.pop()];
-            source[propertyPath[0]].undo(emitEvent);
+            while(propertyPath.length > 1) pointer = pointer[propertyPath.pop()];
+            pointer[propertyPath[0]].undo(emitEvent);
             return this;
         }
         
@@ -186,14 +187,14 @@
     EnrichedObject.prototype.redo = function(emitEvent, propertyPath) {
         if(emitEvent === undefined) emitEvent = true;
         
-        var source = this;
+        var pointer = this;
         if(propertyPath) {
-            while(propertyPath.length > 1) source = source[propertyPath.pop()];
-            source[propertyPath[0]].redo(emitEvent);
+            while(propertyPath.length > 1) pointer = pointer[propertyPath.pop()];
+            pointer[propertyPath[0]].redo(emitEvent);
             return this;
         }
         
-        var change = source.unredo(false, emitEvent);
+        var change = pointer.unredo(false, emitEvent);
         if(!change) console.log('Nothing to redo');
         return this;
     };
@@ -204,14 +205,13 @@
         
         //go downstream to change flags and then change value
         var path, index, change;
-        var source = this;
+        var pointer = this;
         var first = true;
         do {
-            change = getFunction(source.history);
+            change = getFunction(pointer.history);
             if (change) {
                 if (first) {
                     index = change.index;
-                    delete change.index;
                     first = false;
                 }
 
@@ -219,30 +219,30 @@
                 var value = undone ? change.oldValue : change.newValue;
 
                 path = change.propertyPath;
-                if (path.length > 1) source = source[path[path.length - 1]];
+                if (path.length > 1) pointer = pointer[path[path.length - 1]];
                 else {
                     if (path.length === 1) {
                         var prop = change.propertyPath[0];
-                        //if (source[prop].history && source[prop].history.length) getFunction(source[prop].history).data.undone = undone;
-                        source.obj[prop] = enrich(value, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
+                        //if (pointer[prop].history && pointer[prop].history.length) getFunction(pointer[prop].history).data.undone = undone;
+                        pointer.obj[prop] = enrich(value, pointer[prop].propertyName, pointer[prop].parent, pointer[prop].handlers, pointer[prop].history);
                     } 
                     else if (path.length === 0) {
                         //Problem: undo a push leaves an empty index behind???
-                        EnrichedObject.call(source, value, source.propertyName, source.parent, source.handlers, source.history);
+                        EnrichedObject.call(pointer, value, pointer.propertyName, pointer.parent, pointer.handlers, pointer.history);
                     }
-                    if(emitEvent) source.emit(event, change);
+                    if(emitEvent) pointer.emit(event, change);
                 }
             } else return false;
         } while (path.length > 1);
 
 
         //go upstream to change flags
-        source = this;
-        var upstreamIndex = source.history[index].upstreamIndex;
-        while (source.parent) {
-            source = source.parent;
-            source.history[upstreamIndex].undone = undone;
-            upstreamIndex = source.history[upstreamIndex].upstreamIndex;
+        pointer = this;
+        var upstreamIndex = pointer.history[index].upstreamIndex;
+        while (pointer.parent) {
+            pointer = pointer.parent;
+            pointer.history[upstreamIndex].undone = undone;
+            upstreamIndex = pointer.history[upstreamIndex].upstreamIndex;
         }
         return true;
     };
