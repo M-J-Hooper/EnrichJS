@@ -178,9 +178,9 @@
             return this;
         }
         
-        var change = this.unredo(true, getUndoable);
+        var change = this.unredo(true);
         if (emitEvent && change) this.emit('undo', change);
-        else if(!change) console.log('Nothing to undo');
+        else if(!change) console.log('Nothing to undo', change);
         return this;
     };
 
@@ -194,13 +194,15 @@
             return this;
         }
         
-        var change = source.unredo(false, getRedoable);
+        var change = source.unredo(false);
         if (emitEvent && change) source.emit('redo', change);
-        else if(!change) console.log('Nothing to redo');
+        else if(!change) console.log('Nothing to redo', change);
         return this;
     };
 
-    EnrichedObject.prototype.unredo = function(undone, getFunction) {
+    EnrichedObject.prototype.unredo = function(undone) {
+        var getFunction = undone ? getUndoable : getRedoable;
+        
         //go downstream to change flags and then change value
         var path, index, returnData;
         var source = this;
@@ -229,7 +231,7 @@
                     //Problem: undo a push leaves an empty index behind???
                     EnrichedObject.call(source, value, source.propertyName, source.parent, source.handlers, source.history);
                 }
-            } else return false;
+            } else return change;
         } while (path.length > 1);
 
 

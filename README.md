@@ -63,3 +63,5 @@ This was primarily created as an exercise for practicing prototypal and function
 ## Release History
 
 * 0.1.0 Initial release
+* 0.1.1 Change properties with a path
+* 0.1.2 Undo/redo with a path and event data
