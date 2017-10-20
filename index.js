@@ -130,22 +130,58 @@
 
             if (this.propertyName) upstreamData.propertyPath.push(this.propertyName);
         }
-        if (this.parent) this.parent.emit(event, upstreamData); //propagate the change event firing
+        if (this.parent) this.parent.emit(event, upstreamData); //propagate the event upstream
 
         return this;
     };
+    
+    EnrichedObject.prototype.change = function(change) {
+        change.undone = false;
+        change.active = true;
+        
+        //go downstream to change histories and make change
+        var source = this;
+        while(true) {
+            if(change.propertyPath.length == 1) {
+                source.obj[change.propertyPath[0]] = enrich(change.newValue); //change obj prop to avoid event from setter
+                break;
+            }
+            else if(change.propertyPath.length == 0) {
+                EnrichedObject.call(source, change.newValue, source.propertyName, source.parent, source.handlers, source.history);
+                break;
+            }
+            else source = source[change.propertyPath.pop()];
+        }
+        console.log('');
+        
+        //go upstream to change histories
+        while(true) {
+            if(source.parent) change.upstreamIndex = source.parent.history.length;
+            else delete change.upstreamIndex;
+            
+            source.history = deactivate(source.history);
+            source.history.push(JSON.parse(JSON.stringify(change)));
+            
+            if(!source.parent) break;
+            change.propertyPath.push(source.propertyName);
+            source = source.parent;
+        } 
+        return this;
+    };
 
-    EnrichedObject.prototype.undo = function() {
+    EnrichedObject.prototype.undo = function(emitEvent) {
+        if(emitEvent === undefined) emitEvent = true;
         var change = this.unredo(true, getUndoable);
-        if (change) this.emit('undo', change);
-        else console.log('Nothing to undo');
+        if (emitEvent && change) this.emit('undo', change);
+        else if(!change) console.log('Nothing to undo');
         return this;
     };
 
-    EnrichedObject.prototype.redo = function() {
+    EnrichedObject.prototype.redo = function(emitEvent) {
+        if(emitEvent === undefined) emitEvent = true;
         var change = this.unredo(false, getRedoable);
-        if (change) this.emit('redo', change);
-        else console.log('Nothing to redo');
+        if (emitEvent && change) this.emit('redo', change);
+        else if(!change) console.log('Nothing to redo');
         return this;
     };
 
