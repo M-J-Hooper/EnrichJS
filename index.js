@@ -152,7 +152,6 @@
             }
             else source = source[change.propertyPath.pop()];
         }
-        console.log('');
         
         //go upstream to change histories
         while(true) {
@@ -169,18 +168,34 @@
         return this;
     };
 
-    EnrichedObject.prototype.undo = function(emitEvent) {
+    EnrichedObject.prototype.undo = function(emitEvent, propertyPath) {
         if(emitEvent === undefined) emitEvent = true;
+        
+        var source = this;
+        if(propertyPath && propertyPath.length) {
+            while(propertyPath.length > 1) source = source[propertyPath.pop()];
+            source[propertyPath[0]].undo(emitEvent);
+            return this;
+        }
+        
         var change = this.unredo(true, getUndoable);
         if (emitEvent && change) this.emit('undo', change);
         else if(!change) console.log('Nothing to undo');
         return this;
     };
 
-    EnrichedObject.prototype.redo = function(emitEvent) {
+    EnrichedObject.prototype.redo = function(emitEvent, propertyPath) {
         if(emitEvent === undefined) emitEvent = true;
-        var change = this.unredo(false, getRedoable);
-        if (emitEvent && change) this.emit('redo', change);
+        
+        var source = this;
+        if(propertyPath) {
+            while(propertyPath.length > 1) source = source[propertyPath.pop()];
+            source[propertyPath[0]].redo(emitEvent);
+            return this;
+        }
+        
+        var change = source.unredo(false, getRedoable);
+        if (emitEvent && change) source.emit('redo', change);
         else if(!change) console.log('Nothing to redo');
         return this;
     };

@@ -49,7 +49,7 @@ describe('Miscellaneous behaviour', function() {
         });
     });
     
-    describe('Undo/redo events', function() {
+    describe('Undo/redo events and via path', function() {
         it('Event propagate to parents', function() {
             var obj = enrich(me);
             var x = 0;
@@ -73,6 +73,19 @@ describe('Miscellaneous behaviour', function() {
             expect(x).to.equal(1);
             expect(obj.name).to.equal('Matthew');
             expect(obj.array[0].age).to.equal(23);
+        });
+        it('Undo/redo via path', function() {
+            var obj = enrich(me);
+            var undoPath = ['array'];
+            var redoPath = ['0', 'array'];
+            
+            obj.array[1] = 'X';
+            obj.array[0].age++;
+            obj.name = 'Matthew';
+            obj.undo(false, undoPath);
+            obj.undo(false, []);
+            obj.redo(false, redoPath);
+            expect(obj.array[0].age).to.equal(24);
         });
     });
     
