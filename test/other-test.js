@@ -89,7 +89,7 @@ describe('Miscellaneous behaviour', function() {
         });
     });
     
-    describe('Changes using the change function', function() {
+    describe('Changes via path', function() {
         it('Changes are included correctly', function() {
             var obj = enrich(me);
             var changeData = {
