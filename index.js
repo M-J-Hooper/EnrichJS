@@ -178,9 +178,8 @@
             return this;
         }
         
-        var change = this.unredo(true);
-        if (emitEvent && change) this.emit('undo', change);
-        else if(!change) console.log('Nothing to undo', change);
+        var change = this.unredo(true, emitEvent);
+        if(!change) console.log('Nothing to undo');
         return this;
     };
 
@@ -194,44 +193,46 @@
             return this;
         }
         
-        var change = source.unredo(false);
-        if (emitEvent && change) source.emit('redo', change);
-        else if(!change) console.log('Nothing to redo', change);
+        var change = source.unredo(false, emitEvent);
+        if(!change) console.log('Nothing to redo');
         return this;
     };
 
-    EnrichedObject.prototype.unredo = function(undone) {
+    EnrichedObject.prototype.unredo = function(undone, emitEvent) {
         var getFunction = undone ? getUndoable : getRedoable;
+        var event = undone ? 'undo' : 'redo';
         
         //go downstream to change flags and then change value
-        var path, index, returnData;
+        var path, index, change;
         var source = this;
         var first = true;
         do {
-            var change = getFunction(source.history);
+            change = getFunction(source.history);
             if (change) {
                 if (first) {
                     index = change.index;
+                    delete change.index;
                     first = false;
-
-                    returnData = {};
-                    for (var p in change.data) returnData[p] = change.data[p];
                 }
 
-                change.data.undone = undone;
-                var value = undone ? change.data.oldValue : change.data.newValue;
+                change.undone = undone;
+                var value = undone ? change.oldValue : change.newValue;
 
-                path = change.data.propertyPath;
+                path = change.propertyPath;
                 if (path.length > 1) source = source[path[path.length - 1]];
-                else if (path.length === 1) {
-                    var prop = change.data.propertyPath[0];
-                    if (source[prop].history && source[prop].history.length) getFunction(source[prop].history).data.undone = undone;
-                    source.obj[prop] = enrich(value, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
-                } else if (path.length === 0) {
-                    //Problem: undo a push leaves an empty index behind???
-                    EnrichedObject.call(source, value, source.propertyName, source.parent, source.handlers, source.history);
+                else {
+                    if (path.length === 1) {
+                        var prop = change.propertyPath[0];
+                        //if (source[prop].history && source[prop].history.length) getFunction(source[prop].history).data.undone = undone;
+                        source.obj[prop] = enrich(value, source[prop].propertyName, source[prop].parent, source[prop].handlers, source[prop].history);
+                    } 
+                    else if (path.length === 0) {
+                        //Problem: undo a push leaves an empty index behind???
+                        EnrichedObject.call(source, value, source.propertyName, source.parent, source.handlers, source.history);
+                    }
+                    if(emitEvent) source.emit(event, change);
                 }
-            } else return change;
+            } else return false;
         } while (path.length > 1);
 
 
@@ -243,7 +244,7 @@
             source.history[upstreamIndex].undone = undone;
             upstreamIndex = source.history[upstreamIndex].upstreamIndex;
         }
-        return returnData;
+        return true;
     };
 
 
@@ -344,28 +345,22 @@
     ///////////////////////////////////////////////////////
 
     function getUndoable(history) {
-        var undoable = {};
-
         for (var i = history.length - 1; i >= 0; i--) {
             var data = history[i];
             if (data.active && !data.undone) {
-                undoable.data = data;
-                undoable.index = i;
-                return undoable;
+                data.index = i;
+                return data;
             }
         }
         return undefined;
     }
 
     function getRedoable(history) {
-        var redoable = {};
-
         for (var i = 0; i < history.length; i++) {
             var data = history[i];
             if (data.active && data.undone) {
-                redoable.data = data;
-                redoable.index = i;
-                return redoable;
+                data.index = i;
+                return data;
             }
         }
         return undefined;
