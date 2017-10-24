@@ -205,15 +205,11 @@
         //go downstream to change flags and then change value
         var path, index, change;
         var pointer = this;
-        var first = true;
+        var count = 0;
         do {
             change = getFunction(pointer.history);
             if (change) {
-                if (first) {
-                    index = change.index;
-                    first = false;
-                    if(emitEvent) pointer.emit(event, []);
-                }
+                if (count == 0) index = change.index;
 
                 change.undone = undone;
                 var value = undone ? change.oldValue : change.newValue;
@@ -230,6 +226,8 @@
                     //Problem: undo a push leaves an empty index behind???
                     EnrichedObject.call(pointer, value, pointer.propertyName, pointer.parent, pointer.handlers, pointer.history);
                 }
+                if(count == 0 && emitEvent) pointer.emit(event, []);
+                count++;
             } else return false;
         } while (path.length > 1);
 
