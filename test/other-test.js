@@ -53,13 +53,13 @@ describe('Miscellaneous behaviour', function() {
         it('Event propagate to parents', function() {
             var obj = enrich(me);
             var x = 0;
-            obj.on('undo', function(data) { console.log(data); x++; });
-            obj.array.on('redo', function(data) { console.log(data); x++; });
+            obj.on('undo', function() { x++; });
+            obj.on('redo', function() { x++; });
             
             obj.name = 'Matthew';
             obj.array[0].age++;
             obj.array.undo().redo();
-            //expect(x).to.equal(2);
+            expect(x).to.equal(2);
         });
         it('Events can be disabled', function() {
             var obj = enrich(me);

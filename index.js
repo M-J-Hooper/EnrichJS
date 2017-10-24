@@ -109,18 +109,16 @@
     //fire events
     EnrichedObject.prototype.emit = function(event, data) {
         var i;
+        var upstreamData = data;
+        
         var eventHandlers = this.handlers[event];
         if (eventHandlers) {
             for (i = 0; i < eventHandlers.length; i++) eventHandlers[i](data);
         }
-
-        var upstreamData = {};
-        for (var prop in data) upstreamData[prop] = data[prop];
         
         //change, undo and redo events need to have correct prop paths at each level
-        if (['change', 'undo', 'redo'].indexOf(event) != -1) {
-            upstreamData.propertyPath = [];
-            for (i = 0; i < data.propertyPath.length; i++) upstreamData.propertyPath[i] = data.propertyPath[i];
+        if (['change', 'undo', 'redo'].indexOf(event) !== -1) {
+            upstreamData = JSON.parse(JSON.stringify(data));
             
             //change events to update their histories
             if(event === 'change') {
@@ -129,8 +127,9 @@
                 if(this.parent) data.upstreamIndex = this.parent.history.length;
                 this.history = deactivate(this.history);
                 this.history.push(data);
+                if (this.propertyName) upstreamData.propertyPath.push(this.propertyName);
             }
-            if (this.propertyName) upstreamData.propertyPath.push(this.propertyName);
+            else if (this.propertyName) upstreamData.push(this.propertyName);
         }
         if (this.parent) this.parent.emit(event, upstreamData); //propagate the event upstream
         return this;
@@ -213,9 +212,7 @@
                 if (first) {
                     index = change.index;
                     first = false;
-                    var emitData = JSON.parse(JSON.stringify(change));
-                    emitData.propertyPath = [];
-                    if(emitEvent) pointer.emit(event, emitData); //should emit just path array...
+                    if(emitEvent) pointer.emit(event, []);
                 }
 
                 change.undone = undone;
