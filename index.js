@@ -187,7 +187,7 @@
         if(emitEvent === undefined) emitEvent = true;
         
         var pointer = this;
-        if(propertyPath) {
+        if(propertyPath && propertyPath.length) {
             while(propertyPath.length > 1) pointer = pointer[propertyPath.pop()];
             pointer[propertyPath[0]].redo(emitEvent);
             return this;

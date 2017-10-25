@@ -1,6 +1,6 @@
 {
   "name": "enrich-js",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A library for \"enriching\" JavaScript objects with flexible change-tracking, event, and undo/redo functionality.",
   "main": "index.js",
   "repository": {
